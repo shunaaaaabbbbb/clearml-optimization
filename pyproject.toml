@@ -1,0 +1,15 @@
+[project]
+name = "clearml-optimization"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.3"
+dependencies = [
+    "clearml>=2.1.2",
+    "clearml-agent>=2.0.6",
+    "matplotlib>=3.10.8",
+    "numpy>=2.2.6",
+    "pydantic>=2.12.5",
+    "pyscipopt>=6.0.0",
+    "setuptools>=80.9.0",
+]
