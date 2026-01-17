@@ -108,9 +108,8 @@ class ClearMLEventHandler(Eventhdlr):
             dual = self.model.getDualbound()
             gap = self.model.getGap()
             
-            # Use number of nodes as x-axis or just iter count
-            # SCIP's getNNodes() is better than a manual counter for "Progress"
-            step = self.model.getNNodes()
+            # Use solving time (seconds) as x-axis
+            step = self.model.getSolvingTime()
             
             # Report every time? Might be too much. 
             # ClearML handles high frequency reasonably well, but let's filter slightly if needed.
