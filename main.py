@@ -93,6 +93,14 @@ class ClearMLEventHandler(Eventhdlr):
         self.clearml_logger = clearml_logger
         self.iter_count = 0
 
+    def eventinit(self):
+        self.model.catchEvent(SCIP_EVENTTYPE.BESTSOLFOUND, self)
+        self.model.catchEvent(SCIP_EVENTTYPE.LPEVENT, self) # Catch LP events to see Dual Bound updates
+
+    def eventexit(self):
+        self.model.dropEvent(SCIP_EVENTTYPE.BESTSOLFOUND, self)
+        self.model.dropEvent(SCIP_EVENTTYPE.LPEVENT, self)
+
     def eventexec(self, event):
         try:
             # Safely attempt to get bounds/gap
@@ -100,17 +108,25 @@ class ClearMLEventHandler(Eventhdlr):
             dual = self.model.getDualbound()
             gap = self.model.getGap()
             
+            # Use number of nodes as x-axis or just iter count
+            # SCIP's getNNodes() is better than a manual counter for "Progress"
+            step = self.model.getNNodes()
+            
+            # Report every time? Might be too much. 
+            # ClearML handles high frequency reasonably well, but let's filter slightly if needed.
+            # For small problems, it's fine.
+            
             # SCIP might return infinity for bounds initially
             if abs(primal) < 1e15:
-                self.clearml_logger.report_scalar("Optimization", "Primal Bound", primal, self.iter_count)
+                self.clearml_logger.report_scalar("Objective Values", "Primal Bound", primal, step)
             if abs(dual) < 1e15:
-                self.clearml_logger.report_scalar("Optimization", "Dual Bound", dual, self.iter_count)
+                # Dual bound often starts at -inf or 0. Report only if reasonable.
+                self.clearml_logger.report_scalar("Objective Values", "Dual Bound", dual, step)
             
-            self.clearml_logger.report_scalar("Optimization", "Gap", gap * 100, self.iter_count) # Gap in %
-            self.iter_count += 1
+            self.clearml_logger.report_scalar("Gap", "Current Gap", gap * 100, step) # Gap in %
+            
         except Exception as e:
             pass
-            # logger.warning(f"Event Handler Error: {e}")
 
 # -------------------------------------------------------------------------
 # 4. Solver Logic (PySCIPOpt)
